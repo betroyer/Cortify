@@ -2,6 +2,14 @@
 
 All-in-one Flutter home for the **Cortis** fandom — official updates, schedule, community, discography, voting/support tools, and a private fan diary. Local data is stored with **sqflite**.
 
+## Download APK
+
+Get the latest Android build from the [Releases](https://github.com/betroyer/Cortify/releases) page:
+
+**[Cortify v1.0.0](https://github.com/betroyer/Cortify/releases/tag/v1.0.0)** — download `Cortify-v1.0.0.apk`
+
+On Android you may need to allow installs from unknown sources.
+
 ## Features (from the proposal)
 
 1. **Official Hub & Smart Schedule** — verified announcements, member-filtered schedule, local-time display, reminders  
