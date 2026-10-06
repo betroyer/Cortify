@@ -6,7 +6,7 @@ All-in-one Flutter home for the **Cortis** fandom — official updates, schedule
 
 Get the latest Android build from the [Releases](https://github.com/betroyer/Cortify/releases) page:
 
-**[Cortify v1.0.0](https://github.com/betroyer/Cortify/releases/tag/v1.0.0)** — download `Cortify-v1.0.0.apk`
+**[Cortify v1.1.0](https://github.com/betroyer/Cortify/releases/tag/v1.1.0)** — download `Cortify-v1.1.0.apk`
 
 On Android you may need to allow installs from unknown sources.
 

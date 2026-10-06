@@ -1,48 +1,51 @@
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
 
-/// Glass material for Cortify — frosted panels over an ambient mesh.
+/// iPhone-style system materials for Cortify.
+/// Ultra-thin blur chrome + inset grouped glass — coral stays the tint.
 class Glass {
-  static const radiusLg = 20.0;
-  static const radiusMd = 16.0;
-  static const radiusSm = 12.0;
+  static const radiusLg = 22.0;
+  static const radiusMd = 14.0; // iOS grouped inset
+  static const radiusSm = 10.0;
+  static const radiusPill = 100.0;
 
   static BorderRadius get brLg => BorderRadius.circular(radiusLg);
   static BorderRadius get brMd => BorderRadius.circular(radiusMd);
   static BorderRadius get brSm => BorderRadius.circular(radiusSm);
+  static BorderRadius get brPill => BorderRadius.circular(radiusPill);
 
-  static const fillChrome = Color(0xA6FFFFFF);
-  static const fillPanel = Color(0xC2FFFFFF);
-  static const fillSoft = Color(0x99FFFFFF);
-  static const stroke = Color(0xE6FFFFFF);
-  static const strokeSoft = Color(0x66FFFFFF);
+  /// Ultra-thin material fills (iOS-like translucency).
+  static const fillChrome = Color(0x8CFFFFFF); // ~55%
+  static const fillPanel = Color(0xB8FFFFFF); // ~72% grouped cell
+  static const fillSoft = Color(0x66FFFFFF);
+  static const fillTab = Color(0x99F2F2F7);
+
+  static const stroke = Color(0x59FFFFFF);
+  static const strokeSoft = Color(0x33FFFFFF);
+  static const separator = Color(0x33787880);
 
   static List<BoxShadow> get lift => [
         BoxShadow(
-          color: CortifyColors.charcoal.withValues(alpha: 0.08),
-          blurRadius: 24,
-          offset: const Offset(0, 10),
-        ),
-        BoxShadow(
-          color: CortifyColors.coral.withValues(alpha: 0.04),
-          blurRadius: 16,
-          offset: const Offset(0, 4),
+          color: const Color(0xFF000000).withValues(alpha: 0.06),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
         ),
       ];
 
   static List<BoxShadow> get liftSm => [
         BoxShadow(
-          color: CortifyColors.charcoal.withValues(alpha: 0.06),
-          blurRadius: 14,
-          offset: const Offset(0, 6),
+          color: const Color(0xFF000000).withValues(alpha: 0.04),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
         ),
       ];
 }
 
-/// Soft coral / cream / sage mesh so frosted glass has something to blur.
+/// Soft system wallpaper — light gray-pink wash so materials can frost.
 class AmbientBackdrop extends StatelessWidget {
   const AmbientBackdrop({super.key});
 
@@ -52,13 +55,13 @@ class AmbientBackdrop extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFFFF8F5),
-              Color(0xFFFFE8E2),
-              Color(0xFFF5F0EC),
+              Color(0xFFF2F2F7), // iOS systemGroupedBackground
+              Color(0xFFFFF0ED),
               Color(0xFFE8F2EE),
+              Color(0xFFF2F2F7),
             ],
             stops: [0.0, 0.35, 0.7, 1.0],
           ),
@@ -67,24 +70,19 @@ class AmbientBackdrop extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             _Blob(
-              alignment: Alignment(-1.1, -0.85),
-              size: 280,
-              color: Color(0x55FF8A7A),
+              alignment: Alignment(-0.9, -0.7),
+              size: 320,
+              color: Color(0x40FF8A7A),
             ),
             _Blob(
-              alignment: Alignment(1.15, -0.2),
-              size: 220,
-              color: Color(0x44D4A574),
-            ),
-            _Blob(
-              alignment: Alignment(-0.8, 0.75),
+              alignment: Alignment(1.0, -0.1),
               size: 260,
-              color: Color(0x445B8A7A),
+              color: Color(0x35D4A574),
             ),
             _Blob(
-              alignment: Alignment(0.9, 0.95),
-              size: 200,
-              color: Color(0x40E85D4C),
+              alignment: Alignment(-0.7, 0.85),
+              size: 280,
+              color: Color(0x355B8A7A),
             ),
           ],
         ),
@@ -109,7 +107,7 @@ class _Blob extends StatelessWidget {
     return Align(
       alignment: alignment,
       child: ImageFiltered(
-        imageFilter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
+        imageFilter: ImageFilter.blur(sigmaX: 56, sigmaY: 56),
         child: Container(
           width: size,
           height: size,
@@ -153,11 +151,10 @@ class GlassPanel extends StatelessWidget {
       GlassTone.soft => Glass.fillSoft,
     };
     final blur = switch (tone) {
-      GlassTone.chrome => 22.0,
-      GlassTone.panel => 12.0,
+      GlassTone.chrome => 36.0,
+      GlassTone.panel => 24.0,
       GlassTone.soft => 0.0,
     };
-    final shadows = tone == GlassTone.chrome ? Glass.lift : Glass.liftSm;
 
     Widget frosted = Container(
       width: width,
@@ -168,6 +165,7 @@ class GlassPanel extends StatelessWidget {
         borderRadius: radius,
         border: Border.all(
           color: tone == GlassTone.soft ? Glass.strokeSoft : Glass.stroke,
+          width: 0.5,
         ),
       ),
       child: child,
@@ -185,9 +183,11 @@ class GlassPanel extends StatelessWidget {
       frosted = ClipRRect(borderRadius: radius, child: frosted);
     }
 
-    // Shadow outside clip so soft lift is visible.
     Widget panel = Container(
-      decoration: BoxDecoration(borderRadius: radius, boxShadow: shadows),
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: tone == GlassTone.soft ? null : Glass.liftSm,
+      ),
       child: frosted,
     );
 
@@ -196,19 +196,52 @@ class GlassPanel extends StatelessWidget {
     }
 
     if (onTap != null) {
-      panel = Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          splashColor: CortifyColors.coral.withValues(alpha: 0.12),
-          highlightColor: CortifyColors.coral.withValues(alpha: 0.06),
-          child: panel,
-        ),
+      panel = CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: onTap,
+        child: panel,
       );
     }
 
     return panel;
+  }
+}
+
+/// iOS inset grouped list — one frosted container, hairline separators.
+class GlassGroupedList extends StatelessWidget {
+  const GlassGroupedList({
+    super.key,
+    required this.children,
+    this.margin = const EdgeInsets.symmetric(horizontal: 16),
+  });
+
+  final List<Widget> children;
+  final EdgeInsetsGeometry margin;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) return const SizedBox.shrink();
+    final rows = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      rows.add(children[i]);
+      if (i < children.length - 1) {
+        rows.add(
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Container(height: 0.5, color: Glass.separator),
+          ),
+        );
+      }
+    }
+    return GlassPanel(
+      margin: margin,
+      padding: EdgeInsets.zero,
+      borderRadius: Glass.brMd,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: rows,
+      ),
+    );
   }
 }
 
@@ -218,7 +251,7 @@ class GlassScaffold extends StatelessWidget {
     this.appBar,
     required this.body,
     this.floatingActionButton,
-    this.extendBodyBehindAppBar = false,
+    this.extendBodyBehindAppBar = true,
   });
 
   final PreferredSizeWidget? appBar;
@@ -239,6 +272,7 @@ class GlassScaffold extends StatelessWidget {
   }
 }
 
+/// Translucent nav bar — iOS large-title companion (inline title).
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GlassAppBar({
     super.key,
@@ -246,41 +280,140 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions,
     this.bottom,
     this.leading,
+    this.large = false,
   });
 
   final Widget title;
   final List<Widget>? actions;
   final PreferredSizeWidget? bottom;
   final Widget? leading;
+  final bool large;
 
   @override
-  Size get preferredSize =>
-      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
+  Size get preferredSize {
+    final h = large ? 96.0 : 44.0;
+    return Size.fromHeight(h + (bottom?.preferredSize.height ?? 0));
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      leading: leading,
-      title: title,
-      actions: actions,
-      bottom: bottom,
-      flexibleSpace: ClipRect(
+    final top = MediaQuery.paddingOf(context).top;
+    return PreferredSize(
+      preferredSize: Size.fromHeight(preferredSize.height + top),
+      child: ClipRect(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
           child: Container(
             decoration: const BoxDecoration(
               color: Glass.fillChrome,
               border: Border(
-                bottom: BorderSide(color: Glass.strokeSoft),
+                bottom: BorderSide(color: Glass.strokeSoft, width: 0.5),
               ),
+            ),
+            padding: EdgeInsets.only(top: top),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: large ? 96 : 44,
+                  child: NavigationToolbar(
+                    leading: leading ??
+                        (Navigator.canPop(context)
+                            ? CupertinoNavigationBarBackButton(
+                                color: CortifyColors.coral,
+                                onPressed: () => Navigator.maybePop(context),
+                              )
+                            : null),
+                    middle: DefaultTextStyle(
+                      style: TextStyle(
+                        fontFamily: '.SF Pro Text',
+                        fontSize: large ? 17 : 17,
+                        fontWeight: FontWeight.w600,
+                        color: CortifyColors.label,
+                        letterSpacing: -0.4,
+                      ),
+                      child: title,
+                    ),
+                    trailing: actions == null
+                        ? null
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: actions!,
+                          ),
+                    centerMiddle: !large,
+                  ),
+                ),
+                ?bottom,
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+/// Scroll large title — iOS HIG pattern for root tabs.
+class IosLargeTitle extends StatelessWidget {
+  const IosLargeTitle(this.text, {super.key, this.trailing});
+
+  final String text;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 16, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontFamily: '.SF Pro Display',
+                fontSize: 34,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.37,
+                height: 1.1,
+                color: CortifyColors.label,
+              ),
+            ),
+          ),
+          ?trailing,
+        ],
+      ),
+    );
+  }
+}
+
+/// iOS-style circular glass FAB.
+class GlassFab extends StatelessWidget {
+  const GlassFab({
+    super.key,
+    required this.onPressed,
+    required this.icon,
+    this.tooltip,
+  });
+
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final btn = CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: onPressed,
+      child: GlassPanel(
+        tone: GlassTone.chrome,
+        borderRadius: Glass.brPill,
+        width: 56,
+        height: 56,
+        child: Icon(icon, color: CortifyColors.coral, size: 26),
+      ),
+    );
+    if (tooltip == null) return btn;
+    return Tooltip(message: tooltip!, child: btn);
   }
 }

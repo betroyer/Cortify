@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../database/database_helper.dart';
 import '../../models/song.dart';
@@ -50,82 +50,81 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     return GlassScaffold(
-      appBar: GlassAppBar(
-        title: const Text('Library'),
-        actions: [
-          SoftChip(
-            label: _favoritesOnly ? 'Favorites' : 'All',
-            selected: _favoritesOnly,
-            onTap: () {
-              setState(() => _favoritesOnly = !_favoritesOnly);
-              _load();
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _songs.isEmpty
-              ? EmptyState(
-                  message: _favoritesOnly
-                      ? 'No favorites yet. Heart a song to save it.'
-                      : 'Discography is empty.',
-                  icon: Icons.library_music_outlined,
-                )
-              : ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    8,
-                    20,
-                    glassNavClearance(context),
-                  ),
-                  children: [
-                    SectionHeader(
-                      title: 'Discography',
-                      subtitle: 'Lyrics · translations · favorites',
+      extendBodyBehindAppBar: false,
+      body: SafeArea(
+        bottom: false,
+        child: _loading
+            ? const Center(child: CupertinoActivityIndicator())
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: IosLargeTitle(
+                      'Library',
+                      trailing: SoftChip(
+                        label: _favoritesOnly ? 'Favorites' : 'All',
+                        selected: _favoritesOnly,
+                        onTap: () {
+                          setState(() => _favoritesOnly = !_favoritesOnly);
+                          _load();
+                        },
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    const _GalleryStrip(),
-                    const SizedBox(height: 20),
+                  ),
+                  if (_songs.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: EmptyState(
+                        message: 'No songs yet.',
+                        icon: CupertinoIcons.music_note_list,
+                      ),
+                    )
+                  else ...[
+                    const SliverToBoxAdapter(
+                      child: SectionHeader(
+                        title: 'Collections',
+                        subtitle: 'Gallery · fancams · wallpapers',
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: _GalleryStrip()),
                     ...albums.map((album) {
                       final albumSongs =
                           _songs.where((s) => s.album == album).toList();
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8, top: 8),
-                            child: Text(
-                              album,
-                              style: GoogleFonts.fraunces(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.2,
-                              ),
+                      return SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SectionHeader(title: album),
+                            GlassGroupedList(
+                              children: albumSongs
+                                  .map(
+                                    (song) => _SongRow(
+                                      song: song,
+                                      onFavorite: () => _toggleFavorite(song),
+                                      onTap: () async {
+                                        await Navigator.of(context).push(
+                                          CupertinoPageRoute(
+                                            builder: (_) =>
+                                                SongDetailScreen(song: song),
+                                          ),
+                                        );
+                                        _load();
+                                      },
+                                    ),
+                                  )
+                                  .toList(),
                             ),
-                          ),
-                          ...albumSongs.map(
-                            (song) => _SongTile(
-                              song: song,
-                              onFavorite: () => _toggleFavorite(song),
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        SongDetailScreen(song: song),
-                                  ),
-                                );
-                                _load();
-                              },
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     }),
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: glassNavClearance(context)),
+                    ),
                   ],
-                ),
+                ],
+              ),
+      ),
     );
   }
 }
@@ -136,34 +135,35 @@ class _GalleryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('HD Gallery', Icons.photo_library_rounded, CortifyColors.coral),
-      ('Fancams', Icons.videocam_rounded, CortifyColors.sage),
-      ('Wallpapers', Icons.wallpaper_rounded, CortifyColors.gold),
+      ('HD Gallery', CupertinoIcons.photo_on_rectangle, CortifyColors.coral),
+      ('Fancams', CupertinoIcons.videocam_fill, CortifyColors.sage),
+      ('Wallpapers', CupertinoIcons.device_phone_portrait, CortifyColors.gold),
     ];
     return SizedBox(
-      height: 92,
+      height: 88,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, i) {
           final item = items[i];
           return GlassPanel(
-            width: 124,
+            width: 120,
             tone: GlassTone.soft,
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(item.$2, color: item.$3),
+                Icon(item.$2, color: item.$3, size: 22),
                 const SizedBox(height: 8),
                 Text(
                   item.$1,
                   style: const TextStyle(
+                    fontFamily: '.SF Pro Text',
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
-                    color: CortifyColors.charcoal,
                   ),
                 ),
               ],
@@ -175,8 +175,8 @@ class _GalleryStrip extends StatelessWidget {
   }
 }
 
-class _SongTile extends StatelessWidget {
-  const _SongTile({
+class _SongRow extends StatelessWidget {
+  const _SongRow({
     required this.song,
     required this.onFavorite,
     required this.onTap,
@@ -188,35 +188,70 @@ class _SongTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassPanel(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [CortifyColors.coral, CortifyColors.coralSoft],
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [CortifyColors.coral, CortifyColors.coralSoft],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                CupertinoIcons.music_note,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
-          ),
-          child: const Icon(Icons.music_note, color: Colors.white, size: 22),
-        ),
-        title: Text(
-          song.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text('${song.releaseYear} · ${song.duration}'),
-        trailing: IconButton(
-          onPressed: onFavorite,
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-          icon: Icon(
-            song.isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: CortifyColors.coral,
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    song.title,
+                    style: const TextStyle(
+                      fontFamily: '.SF Pro Text',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: CortifyColors.label,
+                    ),
+                  ),
+                  Text(
+                    '${song.releaseYear} · ${song.duration}',
+                    style: const TextStyle(
+                      fontFamily: '.SF Pro Text',
+                      fontSize: 13,
+                      color: CortifyColors.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            CupertinoButton(
+              padding: const EdgeInsets.all(8),
+              onPressed: onFavorite,
+              child: Icon(
+                song.isFavorite
+                    ? CupertinoIcons.heart_fill
+                    : CupertinoIcons.heart,
+                color: CortifyColors.coral,
+                size: 22,
+              ),
+            ),
+            const Icon(
+              CupertinoIcons.chevron_right,
+              size: 16,
+              color: CortifyColors.tertiary,
+            ),
+          ],
         ),
       ),
     );

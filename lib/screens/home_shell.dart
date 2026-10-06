@@ -1,7 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/glass.dart';
@@ -29,6 +29,14 @@ class _HomeShellState extends State<HomeShell> {
     DiaryScreen(),
   ];
 
+  static const _tabs = [
+    (CupertinoIcons.house_fill, CupertinoIcons.house, 'Hub'),
+    (CupertinoIcons.chat_bubble_2_fill, CupertinoIcons.chat_bubble_2, 'Community'),
+    (CupertinoIcons.music_note_list, CupertinoIcons.music_note_list, 'Library'),
+    (CupertinoIcons.hand_raised_fill, CupertinoIcons.hand_raised, 'Support'),
+    (CupertinoIcons.book_fill, CupertinoIcons.book, 'Diary'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom;
@@ -43,57 +51,39 @@ class _HomeShellState extends State<HomeShell> {
           IndexedStack(index: _index, children: _pages),
         ],
       ),
+      // iOS 18-style floating glass capsule tab bar
       bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 10 + (bottomPad > 0 ? 0 : 4)),
+        padding: EdgeInsets.fromLTRB(20, 0, 20, 8 + (bottomPad > 0 ? 0 : 8)),
         child: ClipRRect(
-          borderRadius: Glass.brLg,
+          borderRadius: Glass.brPill,
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+            filter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
             child: Container(
               decoration: BoxDecoration(
-                color: Glass.fillChrome,
-                borderRadius: Glass.brLg,
-                border: Border.all(color: Glass.stroke),
+                color: Glass.fillTab,
+                borderRadius: Glass.brPill,
+                border: Border.all(color: Glass.stroke, width: 0.5),
                 boxShadow: Glass.lift,
               ),
               child: SafeArea(
                 top: false,
+                minimum: const EdgeInsets.only(bottom: 4),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _NavItem(
-                        icon: Icons.home_rounded,
-                        label: 'Hub',
-                        selected: _index == 0,
-                        onTap: () => setState(() => _index = 0),
-                      ),
-                      _NavItem(
-                        icon: Icons.forum_rounded,
-                        label: 'Community',
-                        selected: _index == 1,
-                        onTap: () => setState(() => _index = 1),
-                      ),
-                      _NavItem(
-                        icon: Icons.library_music_rounded,
-                        label: 'Library',
-                        selected: _index == 2,
-                        onTap: () => setState(() => _index = 2),
-                      ),
-                      _NavItem(
-                        icon: Icons.how_to_vote_rounded,
-                        label: 'Support',
-                        selected: _index == 3,
-                        onTap: () => setState(() => _index = 3),
-                      ),
-                      _NavItem(
-                        icon: Icons.auto_stories_rounded,
-                        label: 'Diary',
-                        selected: _index == 4,
-                        onTap: () => setState(() => _index = 4),
-                      ),
-                    ],
+                    children: List.generate(_tabs.length, (i) {
+                      final tab = _tabs[i];
+                      return Expanded(
+                        child: _IosTabItem(
+                          selectedIcon: tab.$1,
+                          icon: tab.$2,
+                          label: tab.$3,
+                          selected: _index == i,
+                          onTap: () => setState(() => _index = i),
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ),
@@ -105,14 +95,16 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-class _NavItem extends StatelessWidget {
-  const _NavItem({
+class _IosTabItem extends StatelessWidget {
+  const _IosTabItem({
+    required this.selectedIcon,
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
   });
 
+  final IconData selectedIcon;
   final IconData icon;
   final String label;
   final bool selected;
@@ -125,32 +117,34 @@ class _NavItem extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          constraints: const BoxConstraints(minWidth: 56, minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: selected
-                ? CortifyColors.coral.withValues(alpha: 0.12)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-          ),
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: onTap,
+        child: SizedBox(
+          height: 48,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 24),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: Icon(
+                  selected ? selectedIcon : icon,
+                  key: ValueKey(selected),
+                  size: 24,
+                  color: color,
+                ),
+              ),
               const SizedBox(height: 2),
               Text(
                 label,
-                style: GoogleFonts.dmSans(
-                  fontSize: 11,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: '.SF Pro Text',
+                  fontSize: 10,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   color: color,
+                  letterSpacing: 0.1,
                 ),
               ),
             ],

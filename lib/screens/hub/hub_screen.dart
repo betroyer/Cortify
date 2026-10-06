@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 import '../../database/database_helper.dart';
@@ -54,171 +53,150 @@ class _HubScreenState extends State<HubScreen> {
   @override
   Widget build(BuildContext context) {
     return GlassScaffold(
+      extendBodyBehindAppBar: false,
       body: SafeArea(
         bottom: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                color: CortifyColors.coral,
-                onRefresh: _load,
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeader()),
-                    SliverToBoxAdapter(child: _buildPinned()),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                        child: SectionHeader(
-                          title: 'Smart Schedule',
-                          subtitle: 'Auto-adjusted to your local time',
+            ? const Center(child: CupertinoActivityIndicator())
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                slivers: [
+                  CupertinoSliverRefreshControl(onRefresh: _load),
+                  SliverToBoxAdapter(
+                    child: IosLargeTitle(
+                      'Cortify',
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
                         ),
-                      ),
-                    ),
-                    SliverToBoxAdapter(child: _buildMemberFilter()),
-                    if (_events.isEmpty)
-                      const SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: EmptyState(
-                          message: 'No upcoming events for this filter.',
+                        decoration: BoxDecoration(
+                          color: CortifyColors.coral.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(
-                          20,
-                          0,
-                          20,
-                          glassNavClearance(context),
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, i) => _EventCard(
-                              event: _events[i],
-                              onToggleReminder: () =>
-                                  _toggleReminder(_events[i]),
-                            ),
-                            childCount: _events.length,
+                        child: Text(
+                          'Bias · $_bias',
+                          style: const TextStyle(
+                            fontFamily: '.SF Pro Text',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: CortifyColors.coral,
                           ),
                         ),
                       ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: Text(
+                        'One community, one space, one heart.',
+                        style: TextStyle(
+                          fontFamily: '.SF Pro Text',
+                          fontSize: 15,
+                          color: CortifyColors.muted,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_announcements.isNotEmpty) ...[
+                    const SliverToBoxAdapter(
+                      child: SectionHeader(
+                        title: 'Official Updates',
+                        subtitle: 'Verified · real-time',
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: GlassGroupedList(
+                        children: _announcements
+                            .take(3)
+                            .map((a) => _AnnouncementRow(announcement: a))
+                            .toList(),
+                      ),
+                    ),
                   ],
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-      child: GlassPanel(
-        tone: GlassTone.chrome,
-        borderRadius: Glass.brLg,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'Cortify',
-                  style: GoogleFonts.fraunces(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: CortifyColors.charcoal,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: CortifyColors.coral.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: CortifyColors.coral.withValues(alpha: 0.25),
+                  const SliverToBoxAdapter(
+                    child: SectionHeader(
+                      title: 'Smart Schedule',
+                      subtitle: 'Local time · member filter',
                     ),
                   ),
-                  child: Text(
-                    'Bias: $_bias',
-                    style: const TextStyle(
-                      color: CortifyColors.coral,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 40,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: _members
+                            .map(
+                              (m) => SoftChip(
+                                label: m,
+                                selected: _memberFilter == m,
+                                onTap: () {
+                                  setState(() => _memberFilter = m);
+                                  _load();
+                                },
+                              ),
+                            )
+                            .toList(),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'One community, one space, one heart.',
-              style: TextStyle(
-                color: CortifyColors.muted,
-                fontSize: 14,
-                height: 1.35,
+                  const OmitSliver(height: 12),
+                  if (_events.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: EmptyState(
+                        message: 'No upcoming events for this filter.',
+                        icon: CupertinoIcons.calendar,
+                      ),
+                    )
+                  else
+                    ..._events.map(
+                      (e) => OmitSliver(
+                        child: _EventCard(
+                          event: e,
+                          onToggleReminder: () => _toggleReminder(e),
+                        ),
+                      ),
+                    ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: glassNavClearance(context)),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPinned() {
-    if (_announcements.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SectionHeader(
-            title: 'Official Updates',
-            subtitle: 'Verified · real-time',
-          ),
-          ..._announcements.take(3).map(
-                (a) => _AnnouncementTile(announcement: a),
-              ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemberFilter() {
-    return SizedBox(
-      height: 48,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        children: _members
-            .map(
-              (m) => SoftChip(
-                label: m,
-                selected: _memberFilter == m,
-                onTap: () {
-                  setState(() => _memberFilter = m);
-                  _load();
-                },
-              ),
-            )
-            .toList(),
       ),
     );
   }
 }
 
-class _AnnouncementTile extends StatelessWidget {
-  const _AnnouncementTile({required this.announcement});
+/// Tiny helper so we can mix widgets into sliver lists cleanly.
+class OmitSliver extends StatelessWidget {
+  const OmitSliver({super.key, this.child, this.height});
+
+  final Widget? child;
+  final double? height;
+
+  @override
+  Widget build(BuildContext context) {
+    if (height != null) {
+      return SliverToBoxAdapter(child: SizedBox(height: height));
+    }
+    return SliverToBoxAdapter(child: child);
+  }
+}
+
+class _AnnouncementRow extends StatelessWidget {
+  const _AnnouncementRow({required this.announcement});
 
   final Announcement announcement;
 
   @override
   Widget build(BuildContext context) {
-    return GlassPanel(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -228,8 +206,8 @@ class _AnnouncementTile extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.only(right: 6),
                   child: Icon(
-                    Icons.push_pin,
-                    size: 14,
+                    CupertinoIcons.pin_fill,
+                    size: 13,
                     color: CortifyColors.coral,
                   ),
                 ),
@@ -237,46 +215,42 @@ class _AnnouncementTile extends StatelessWidget {
                 child: Text(
                   announcement.title,
                   style: const TextStyle(
+                    fontFamily: '.SF Pro Text',
                     fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                    fontSize: 17,
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: CortifyColors.coral.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  announcement.category,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: CortifyColors.coral,
-                    fontWeight: FontWeight.w600,
-                  ),
+              Text(
+                announcement.category,
+                style: const TextStyle(
+                  fontFamily: '.SF Pro Text',
+                  fontSize: 13,
+                  color: CortifyColors.coral,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             announcement.body,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13,
+            style: const TextStyle(
+              fontFamily: '.SF Pro Text',
+              fontSize: 15,
               color: CortifyColors.muted,
-              height: 1.4,
+              height: 1.3,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             DateFormat('MMM d · h:mm a')
                 .format(announcement.postedAt.toLocal()),
-            style: TextStyle(
-              fontSize: 11,
-              color: CortifyColors.muted.withValues(alpha: 0.85),
+            style: const TextStyle(
+              fontFamily: '.SF Pro Text',
+              fontSize: 12,
+              color: CortifyColors.tertiary,
             ),
           ),
         ],
@@ -300,7 +274,7 @@ class _EventCard extends StatelessWidget {
       case 'Fanmeet':
         return CortifyColors.sage;
       default:
-        return const Color(0xFF7A6B9A);
+        return CortifyColors.systemBlue;
     }
   }
 
@@ -308,26 +282,23 @@ class _EventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final local = event.startAt.toLocal();
     return GlassPanel(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       padding: const EdgeInsets.all(14),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 56,
+            width: 52,
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               color: CortifyColors.coral.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.7),
-              ),
             ),
             child: Column(
               children: [
                 Text(
                   DateFormat('MMM').format(local).toUpperCase(),
                   style: const TextStyle(
+                    fontFamily: '.SF Pro Text',
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: CortifyColors.coral,
@@ -335,15 +306,20 @@ class _EventCard extends StatelessWidget {
                 ),
                 Text(
                   DateFormat('d').format(local),
-                  style: GoogleFonts.fraunces(
+                  style: const TextStyle(
+                    fontFamily: '.SF Pro Display',
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: CortifyColors.charcoal,
+                    color: CortifyColors.label,
                   ),
                 ),
                 Text(
                   DateFormat('h:mm').format(local),
-                  style: TextStyle(fontSize: 10, color: CortifyColors.muted),
+                  style: const TextStyle(
+                    fontFamily: '.SF Pro Text',
+                    fontSize: 10,
+                    color: CortifyColors.muted,
+                  ),
                 ),
               ],
             ),
@@ -355,74 +331,67 @@ class _EventCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _typeColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        event.eventType,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: _typeColor,
-                        ),
+                    Text(
+                      event.eventType,
+                      style: TextStyle(
+                        fontFamily: '.SF Pro Text',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _typeColor,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       event.member,
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: const TextStyle(
+                        fontFamily: '.SF Pro Text',
+                        fontSize: 12,
                         color: CortifyColors.muted,
                       ),
                     ),
                     if (event.isOfficial) ...[
                       const SizedBox(width: 4),
                       const Icon(
-                        Icons.verified,
-                        size: 14,
+                        CupertinoIcons.checkmark_seal_fill,
+                        size: 13,
                         color: CortifyColors.coral,
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   event.title,
                   style: const TextStyle(
+                    fontFamily: '.SF Pro Text',
                     fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   event.description,
-                  style: TextStyle(
+                  style: const TextStyle(
+                    fontFamily: '.SF Pro Text',
                     fontSize: 13,
                     color: CortifyColors.muted,
-                    height: 1.35,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
+          CupertinoButton(
+            padding: const EdgeInsets.all(8),
             onPressed: onToggleReminder,
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-            icon: Icon(
+            child: Icon(
               event.reminderOn
-                  ? Icons.notifications_active
-                  : Icons.notifications_none,
+                  ? CupertinoIcons.bell_fill
+                  : CupertinoIcons.bell,
               color: event.reminderOn
                   ? CortifyColors.coral
                   : CortifyColors.muted,
+              size: 22,
             ),
-            tooltip: event.reminderOn ? 'Reminder on' : 'Set reminder',
           ),
         ],
       ),

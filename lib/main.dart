@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,9 +12,9 @@ Future<void> main() async {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ),
   );
-  // Warm up SQLite so first tab loads fast.
   await DatabaseHelper.instance.database;
   runApp(const CortifyApp());
 }
@@ -27,6 +28,7 @@ class CortifyApp extends StatelessWidget {
       title: 'Cortify',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      scrollBehavior: const CupertinoScrollBehavior(),
       home: const HomeShell(),
     );
   }

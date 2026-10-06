@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/glass.dart';
@@ -18,32 +18,33 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // iOS section header style — uppercase footnote above grouped lists
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
+      padding: const EdgeInsets.fromLTRB(32, 20, 20, 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: GoogleFonts.fraunces(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: CortifyColors.charcoal,
-                    letterSpacing: -0.3,
+                  title.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: '.SF Pro Text',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.08,
+                    color: CortifyColors.muted,
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.35,
-                      color: CortifyColors.muted,
+                    style: const TextStyle(
+                      fontFamily: '.SF Pro Text',
+                      fontSize: 12,
+                      color: CortifyColors.tertiary,
                     ),
                   ),
                 ],
@@ -67,37 +68,34 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: GlassPanel(
-          tone: GlassTone.soft,
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-          borderRadius: Glass.brLg,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon ?? Icons.favorite_border,
-                size: 44,
-                color: CortifyColors.coralSoft,
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon ?? CupertinoIcons.heart,
+              size: 48,
+              color: CortifyColors.tertiary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: '.SF Pro Text',
+                color: CortifyColors.muted,
+                fontSize: 17,
+                height: 1.35,
               ),
-              const SizedBox(height: 14),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: CortifyColors.muted,
-                  fontSize: 15,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
+/// iOS segmented-style capsule chips.
 class SoftChip extends StatelessWidget {
   const SoftChip({
     super.key,
@@ -114,26 +112,34 @@ class SoftChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: onTap == null ? null : (_) => onTap!(),
-        selectedColor: CortifyColors.coral,
-        checkmarkColor: Colors.white,
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : CortifyColors.charcoal,
-          fontWeight: FontWeight.w500,
-          fontSize: 13,
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
+        minimumSize: const Size(44, 32),
+        onPressed: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected
+                ? CortifyColors.coral
+                : Colors.white.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? CortifyColors.coral : Glass.stroke,
+              width: 0.5,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: '.SF Pro Text',
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: selected ? Colors.white : CortifyColors.label,
+            ),
+          ),
         ),
-        backgroundColor: Colors.white.withValues(alpha: 0.55),
-        side: BorderSide(
-          color: selected
-              ? CortifyColors.coral
-              : Colors.white.withValues(alpha: 0.8),
-        ),
-        showCheckmark: false,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        materialTapTargetSize: MaterialTapTargetSize.padded,
       ),
     );
   }
@@ -150,7 +156,7 @@ class MemberAvatar extends StatelessWidget {
     'Kai': Color(0xFF5B8A7A),
     'Leo': Color(0xFFD4A574),
     'Jun': Color(0xFF7A6B9A),
-    'All': Color(0xFF8A7570),
+    'All': Color(0xFF8E8E93),
   };
 
   @override
@@ -161,24 +167,26 @@ class MemberAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withValues(alpha: 0.18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.85)),
-        boxShadow: Glass.liftSm,
+        color: color.withValues(alpha: 0.16),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.7),
+          width: 0.5,
+        ),
       ),
       alignment: Alignment.center,
       child: Text(
         name.isEmpty ? '?' : name[0].toUpperCase(),
         style: TextStyle(
+          fontFamily: '.SF Pro Text',
           color: color,
-          fontWeight: FontWeight.w700,
-          fontSize: size * 0.4,
+          fontWeight: FontWeight.w600,
+          fontSize: size * 0.38,
         ),
       ),
     );
   }
 }
 
-/// Bottom padding so list content clears the floating glass nav.
 double glassNavClearance(BuildContext context) {
-  return 88 + MediaQuery.paddingOf(context).bottom;
+  return 96 + MediaQuery.paddingOf(context).bottom;
 }

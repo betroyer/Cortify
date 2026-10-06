@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../database/database_helper.dart';
 import '../../models/song.dart';
@@ -36,7 +36,6 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -45,15 +44,14 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
             children: [
               GlassAppBar(
                 title: Text(_song.title),
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
-                ),
                 actions: [
-                  IconButton(
+                  CupertinoButton(
+                    padding: const EdgeInsets.only(right: 8),
                     onPressed: _toggleFavorite,
-                    icon: Icon(
-                      _song.isFavorite ? Icons.favorite : Icons.favorite_border,
+                    child: Icon(
+                      _song.isFavorite
+                          ? CupertinoIcons.heart_fill
+                          : CupertinoIcons.heart,
                       color: CortifyColors.coral,
                     ),
                   ),
@@ -61,6 +59,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
               ),
               Expanded(
                 child: ListView(
+                  physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.all(20),
                   children: [
                     GlassPanel(
@@ -70,54 +69,73 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                       child: Column(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
+                            padding: const EdgeInsets.all(18),
+                            decoration: const BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 colors: [
                                   CortifyColors.coral,
                                   CortifyColors.coralSoft,
                                 ],
                               ),
-                              boxShadow: Glass.liftSm,
                             ),
                             child: const Icon(
-                              Icons.album,
-                              size: 40,
+                              CupertinoIcons.music_albums_fill,
+                              size: 36,
                               color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: 14),
                           Text(
                             _song.album,
-                            style: GoogleFonts.fraunces(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                            style: const TextStyle(
+                              fontFamily: '.SF Pro Display',
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${_song.releaseYear} · ${_song.duration}',
-                            style: TextStyle(color: CortifyColors.muted),
+                            style: const TextStyle(
+                              fontFamily: '.SF Pro Text',
+                              color: CortifyColors.muted,
+                              fontSize: 15,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
-                        Text(
+                        const Text(
                           'Lyrics',
-                          style: GoogleFonts.fraunces(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
+                          style: TextStyle(
+                            fontFamily: '.SF Pro Display',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const Spacer(),
-                        SoftToggle(
-                          label: _showTranslated ? 'Translated' : 'Original',
-                          onTap: () => setState(
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          color: Colors.white.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(20),
+                          onPressed: () => setState(
                             () => _showTranslated = !_showTranslated,
+                          ),
+                          child: Text(
+                            _showTranslated ? 'Translated' : 'Original',
+                            style: const TextStyle(
+                              fontFamily: '.SF Pro Text',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: CortifyColors.coral,
+                            ),
                           ),
                         ),
                       ],
@@ -127,7 +145,11 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                       padding: const EdgeInsets.all(18),
                       child: Text(
                         lyrics,
-                        style: const TextStyle(fontSize: 16, height: 1.7),
+                        style: const TextStyle(
+                          fontFamily: '.SF Pro Text',
+                          fontSize: 17,
+                          height: 1.55,
+                        ),
                       ),
                     ),
                   ],
@@ -136,44 +158,6 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class SoftToggle extends StatelessWidget {
-  const SoftToggle({super.key, required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.85)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.translate, size: 16, color: CortifyColors.coral),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: CortifyColors.coral,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

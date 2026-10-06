@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../database/database_helper.dart';
@@ -47,9 +47,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Future<void> _openForm([FanDiary? entry]) async {
-    final changed = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => DiaryFormScreen(entry: entry)),
+    final changed = await Navigator.of(context).push<bool>(
+      CupertinoPageRoute(builder: (_) => DiaryFormScreen(entry: entry)),
     );
     if (changed == true) await _load();
   }
@@ -57,39 +56,22 @@ class _DiaryScreenState extends State<DiaryScreen> {
   Future<void> _changeBias() async {
     const members = ['Ren', 'Kai', 'Leo', 'Jun'];
     final current = _profile?['bias_member'] as String? ?? 'Ren';
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showCupertinoModalPopup<String>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => GlassPanel(
-        tone: GlassTone.chrome,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  'Choose your bias',
-                  style: GoogleFonts.fraunces(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('Choose your bias'),
+        actions: members
+            .map(
+              (m) => CupertinoActionSheetAction(
+                onPressed: () => Navigator.pop(ctx, m),
+                isDefaultAction: m == current,
+                child: Text(m),
               ),
-              ...members.map(
-                (m) => ListTile(
-                  leading: MemberAvatar(name: m),
-                  title: Text(m),
-                  trailing: m == current
-                      ? const Icon(Icons.check, color: CortifyColors.coral)
-                      : null,
-                  onTap: () => Navigator.pop(ctx, m),
-                ),
-              ),
-            ],
-          ),
+            )
+            .toList(),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
         ),
       ),
     );
@@ -116,22 +98,25 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final controller = TextEditingController(
       text: _profile?['display_name'] as String? ?? '',
     );
-    final name = await showDialog<String>(
+    final name = await showCupertinoDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white.withValues(alpha: 0.95),
-        shape: RoundedRectangleBorder(borderRadius: Glass.brMd),
+      builder: (ctx) => CupertinoAlertDialog(
         title: const Text('Display name'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Your fan name'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: controller,
+            placeholder: 'Your fan name',
+            autofocus: true,
+          ),
         ),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          CupertinoDialogAction(
+            isDefaultAction: true,
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
             child: const Text('Save'),
           ),
@@ -151,152 +136,200 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final name = _profile?['display_name'] as String? ?? 'Cortis Fan';
 
     return GlassScaffold(
-      appBar: const GlassAppBar(title: Text('Fan Diary')),
+      extendBodyBehindAppBar: false,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 64),
-        child: FloatingActionButton(
+        padding: const EdgeInsets.only(bottom: 72),
+        child: GlassFab(
           onPressed: () => _openForm(),
+          icon: CupertinoIcons.add,
           tooltip: 'New memory',
-          child: const Icon(Icons.add),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              color: CortifyColors.coral,
-              onRefresh: _load,
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  20,
-                  8,
-                  20,
-                  glassNavClearance(context) + 24,
+      body: SafeArea(
+        bottom: false,
+        child: _loading
+            ? const Center(child: CupertinoActivityIndicator())
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
                 ),
-                children: [
-                  GestureDetector(
-                    onTap: _cycleWallpaper,
-                    child: GlassPanel(
-                      tone: GlassTone.chrome,
-                      borderRadius: Glass.brLg,
-                      padding: EdgeInsets.zero,
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: Glass.brLg,
-                          gradient: LinearGradient(
-                            colors: [
-                              colors[0].withValues(alpha: 0.85),
-                              colors[1].withValues(alpha: 0.75),
+                slivers: [
+                  CupertinoSliverRefreshControl(onRefresh: _load),
+                  const SliverToBoxAdapter(child: IosLargeTitle('Diary')),
+                  OmitSliver(
+                    child: GestureDetector(
+                      onTap: _cycleWallpaper,
+                      child: GlassPanel(
+                        tone: GlassTone.chrome,
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        borderRadius: Glass.brLg,
+                        padding: EdgeInsets.zero,
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            borderRadius: Glass.brLg,
+                            gradient: LinearGradient(
+                              colors: [
+                                colors[0].withValues(alpha: 0.88),
+                                colors[1].withValues(alpha: 0.78),
+                              ],
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  MemberAvatar(name: bias, size: 52),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: const TextStyle(
+                                            fontFamily: '.SF Pro Display',
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Tap wallpaper · bias widget',
+                                          style: TextStyle(
+                                            fontFamily: '.SF Pro Text',
+                                            color: Colors.white
+                                                .withValues(alpha: 0.9),
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  _GlassAction(
+                                    label: 'Bias: $bias',
+                                    onTap: _changeBias,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _GlassAction(
+                                    label: 'Rename',
+                                    onTap: _rename,
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                MemberAvatar(name: bias, size: 52),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name,
-                                        style: GoogleFonts.fraunces(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Bias widget · tap to change wallpaper',
-                                        style: TextStyle(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.9),
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                ActionChip(
-                                  label: Text('Bias: $bias'),
-                                  onPressed: _changeBias,
-                                  backgroundColor:
-                                      Colors.white.withValues(alpha: 0.25),
-                                  labelStyle:
-                                      const TextStyle(color: Colors.white),
-                                  side: BorderSide(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.4),
-                                  ),
-                                ),
-                                ActionChip(
-                                  label: const Text('Rename'),
-                                  onPressed: _rename,
-                                  backgroundColor:
-                                      Colors.white.withValues(alpha: 0.25),
-                                  labelStyle:
-                                      const TextStyle(color: Colors.white),
-                                  side: BorderSide(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.4),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  SectionHeader(
-                    title: 'Memory log',
-                    subtitle: 'Private · just for you',
+                  const SliverToBoxAdapter(
+                    child: SectionHeader(
+                      title: 'Memory log',
+                      subtitle: 'Private · just for you',
+                    ),
                   ),
                   if (_entries.isEmpty)
-                    const EmptyState(
-                      message:
-                          'Start your Cortis diary — concerts, first listens, feelings.',
-                      icon: Icons.auto_stories_outlined,
+                    const OmitSliver(
+                      child: EmptyState(
+                        message:
+                            'Start your Cortis diary — concerts, first listens, feelings.',
+                        icon: CupertinoIcons.book,
+                      ),
                     )
                   else
                     ..._entries.map(
-                      (e) => Dismissible(
-                        key: ValueKey(e.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: CortifyColors.coral.withValues(alpha: 0.9),
-                            borderRadius: Glass.brMd,
+                      (e) => OmitSliver(
+                        child: Dismissible(
+                          key: ValueKey(e.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 24),
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                            decoration: BoxDecoration(
+                              color: CortifyColors.coral,
+                              borderRadius: Glass.brMd,
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.delete,
+                              color: Colors.white,
+                            ),
                           ),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        onDismissed: (_) async {
-                          await _db.deleteDiary(e.id!);
-                          await _load();
-                        },
-                        child: _DiaryCard(
-                          entry: e,
-                          onTap: () => _openForm(e),
+                          onDismissed: (_) async {
+                            await _db.deleteDiary(e.id!);
+                            await _load();
+                          },
+                          child: _DiaryCard(
+                            entry: e,
+                            onTap: () => _openForm(e),
+                          ),
                         ),
                       ),
                     ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: glassNavClearance(context) + 24),
+                  ),
                 ],
               ),
-            ),
+      ),
+    );
+  }
+}
+
+class OmitSliver extends StatelessWidget {
+  const OmitSliver({super.key, this.child, this.height});
+
+  final Widget? child;
+  final double? height;
+
+  @override
+  Widget build(BuildContext context) {
+    if (height != null) {
+      return OmitSliverHeight(height!);
+    }
+    return SliverToBoxAdapter(child: child);
+  }
+}
+
+class OmitSliverHeight extends StatelessWidget {
+  const OmitSliverHeight(this.height, {super.key});
+  final double height;
+
+  @override
+  Widget build(BuildContext context) =>
+      SliverToBoxAdapter(child: SizedBox(height: height));
+}
+
+class _GlassAction extends StatelessWidget {
+  const _GlassAction({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: Colors.white.withValues(alpha: 0.22),
+      borderRadius: BorderRadius.circular(20),
+      onPressed: onTap,
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 }
@@ -310,7 +343,7 @@ class _DiaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassPanel(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       padding: const EdgeInsets.all(14),
       onTap: onTap,
       child: Column(
@@ -322,8 +355,8 @@ class _DiaryCard extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.only(right: 6),
                   child: Icon(
-                    Icons.stadium,
-                    size: 16,
+                    CupertinoIcons.star_fill,
+                    size: 14,
                     color: CortifyColors.gold,
                   ),
                 ),
@@ -331,17 +364,18 @@ class _DiaryCard extends StatelessWidget {
                 child: Text(
                   entry.title,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                    fontFamily: '.SF Pro Text',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
               ),
               Text(
                 entry.mood,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontFamily: '.SF Pro Text',
+                  fontSize: 13,
                   color: CortifyColors.coral,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -351,10 +385,11 @@ class _DiaryCard extends StatelessWidget {
             entry.body,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
+            style: const TextStyle(
+              fontFamily: '.SF Pro Text',
               color: CortifyColors.muted,
-              height: 1.4,
-              fontSize: 13,
+              height: 1.35,
+              fontSize: 14,
             ),
           ),
           const SizedBox(height: 8),
@@ -364,12 +399,20 @@ class _DiaryCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 entry.biasMember,
-                style: TextStyle(fontSize: 12, color: CortifyColors.muted),
+                style: const TextStyle(
+                  fontFamily: '.SF Pro Text',
+                  fontSize: 12,
+                  color: CortifyColors.muted,
+                ),
               ),
               const Spacer(),
               Text(
                 DateFormat('MMM d, y').format(entry.createdAt),
-                style: TextStyle(fontSize: 11, color: CortifyColors.muted),
+                style: const TextStyle(
+                  fontFamily: '.SF Pro Text',
+                  fontSize: 12,
+                  color: CortifyColors.tertiary,
+                ),
               ),
             ],
           ),

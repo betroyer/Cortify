@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../database/database_helper.dart';
@@ -79,19 +80,23 @@ class _DiaryFormScreenState extends State<DiaryFormScreen> {
           Column(
             children: [
               GlassAppBar(
-                title: Text(isEdit ? 'Edit memory' : 'New memory'),
-                leading: IconButton(
-                  icon: const Icon(Icons.close),
+                title: Text(isEdit ? 'Edit Memory' : 'New Memory'),
+                leading: CupertinoButton(
+                  padding: EdgeInsets.zero,
                   onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
                 ),
                 actions: [
-                  TextButton(
+                  CupertinoButton(
+                    padding: const EdgeInsets.only(right: 8),
                     onPressed: _saving ? null : _save,
                     child: Text(
                       'Save',
                       style: TextStyle(
-                        color: CortifyColors.coral,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
+                        color: _saving
+                            ? CortifyColors.tertiary
+                            : CortifyColors.coral,
                       ),
                     ),
                   ),
@@ -101,7 +106,8 @@ class _DiaryFormScreenState extends State<DiaryFormScreen> {
                 child: Form(
                   key: _formKey,
                   child: ListView(
-                    padding: const EdgeInsets.all(20),
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
                     children: [
                       GlassPanel(
                         padding: const EdgeInsets.all(16),
@@ -109,82 +115,107 @@ class _DiaryFormScreenState extends State<DiaryFormScreen> {
                           children: [
                             TextFormField(
                               controller: _title,
-                              decoration:
-                                  const InputDecoration(labelText: 'Title'),
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Add a title'
-                                  : null,
+                              style: const TextStyle(
+                                fontFamily: '.SF Pro Text',
+                                fontSize: 17,
+                              ),
+                              decoration: const InputDecoration(
+                                labelText: 'Title',
+                              ),
+                              validator: (v) =>
+                                  (v == null || v.trim().isEmpty)
+                                      ? 'Add a title'
+                                      : null,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _body,
                               maxLines: 6,
+                              style: const TextStyle(
+                                fontFamily: '.SF Pro Text',
+                                fontSize: 17,
+                              ),
                               decoration: const InputDecoration(
                                 labelText: 'Your memory',
                                 alignLabelWithHint: true,
                               ),
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Write something'
-                                  : null,
+                              validator: (v) =>
+                                  (v == null || v.trim().isEmpty)
+                                      ? 'Write something'
+                                      : null,
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Text(
-                        'Mood',
-                        style: TextStyle(
-                          color: CortifyColors.muted,
-                          fontSize: 13,
+                      const Padding(
+                        padding: EdgeInsets.only(left: 16, bottom: 8),
+                        child: Text(
+                          'MOOD',
+                          style: TextStyle(
+                            fontFamily: '.SF Pro Text',
+                            fontSize: 13,
+                            color: CortifyColors.muted,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        children: _moods
-                            .map(
-                              (m) => SoftChip(
-                                label: m,
-                                selected: _mood == m,
-                                onTap: () => setState(() => _mood = m),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'About member',
-                        style: TextStyle(
-                          color: CortifyColors.muted,
-                          fontSize: 13,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Wrap(
+                          children: _moods
+                              .map(
+                                (m) => SoftChip(
+                                  label: m,
+                                  selected: _mood == m,
+                                  onTap: () => setState(() => _mood = m),
+                                ),
+                              )
+                              .toList(),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        children: _members
-                            .map(
-                              (m) => SoftChip(
-                                label: m,
-                                selected: _bias == m,
-                                onTap: () => setState(() => _bias = m),
-                              ),
-                            )
-                            .toList(),
+                      const SizedBox(height: 16),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 16, bottom: 8),
+                        child: Text(
+                          'ABOUT MEMBER',
+                          style: TextStyle(
+                            fontFamily: '.SF Pro Text',
+                            fontSize: 13,
+                            color: CortifyColors.muted,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Wrap(
+                          children: _members
+                              .map(
+                                (m) => SoftChip(
+                                  label: m,
+                                  selected: _bias == m,
+                                  onTap: () => setState(() => _bias = m),
+                                ),
+                              )
+                              .toList(),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       GlassPanel(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
+                        child: CupertinoListTile(
                           title: const Text('Concert memory'),
                           subtitle: const Text('Mark special live moments'),
-                          value: _isConcert,
-                          activeThumbColor: CortifyColors.coral,
-                          onChanged: (v) => setState(() => _isConcert = v),
+                          trailing: CupertinoSwitch(
+                            value: _isConcert,
+                            activeTrackColor: CortifyColors.coral,
+                            onChanged: (v) => setState(() => _isConcert = v),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
-                      ElevatedButton(
+                      CupertinoButton.filled(
                         onPressed: _saving ? null : _save,
+                        borderRadius: BorderRadius.circular(14),
                         child: Text(_saving ? 'Saving…' : 'Save memory'),
                       ),
                     ],

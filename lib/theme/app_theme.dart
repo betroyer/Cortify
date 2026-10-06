@@ -1,20 +1,21 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-/// Warm Cortis-inspired palette — coral heart, soft cream, deep charcoal.
-/// Tuned for glass panels: ink stays dark enough on frosted fills.
+/// Cortify palette mapped to iOS semantic roles + brand tint.
 class CortifyColors {
-  static const coral = Color(0xFFE85D4C);
+  static const coral = Color(0xFFE85D4C); // tint
   static const coralSoft = Color(0xFFFF8A7A);
   static const blush = Color(0xFFFFF0ED);
-  static const cream = Color(0xFFFFF8F5);
-  static const sand = Color(0xFFF5E6E0);
-  static const charcoal = Color(0xFF2C2422);
-  /// Secondary text — warmer + darker for ≥4.5:1 on glass.
-  static const muted = Color(0xFF6B5650);
+  static const cream = Color(0xFFF2F2F7); // systemGroupedBackground
+  static const sand = Color(0xFFE5E5EA);
+  static const label = Color(0xFF000000);
+  static const charcoal = Color(0xFF1C1C1E); // label
+  static const muted = Color(0xFF8E8E93); // secondaryLabel
+  static const tertiary = Color(0xFFAEAEB2);
   static const sage = Color(0xFF5B8A7A);
   static const gold = Color(0xFFD4A574);
   static const white = Color(0xFFFFFFFF);
+  static const systemBlue = Color(0xFF007AFF);
 }
 
 class AppTheme {
@@ -22,6 +23,7 @@ class AppTheme {
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      platform: TargetPlatform.iOS,
       colorScheme: ColorScheme.fromSeed(
         seedColor: CortifyColors.coral,
         primary: CortifyColors.coral,
@@ -31,111 +33,210 @@ class AppTheme {
         onSurface: CortifyColors.charcoal,
       ),
       scaffoldBackgroundColor: Colors.transparent,
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
+    );
+
+    // SF Pro–like UI scale (falls back when .SF Pro unavailable).
+    final textTheme = base.textTheme.copyWith(
+      displayLarge: const TextStyle(
+        fontFamily: '.SF Pro Display',
+        fontSize: 34,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.37,
+        color: CortifyColors.label,
+      ),
+      headlineMedium: const TextStyle(
+        fontFamily: '.SF Pro Display',
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.35,
+        color: CortifyColors.label,
+      ),
+      titleLarge: const TextStyle(
+        fontFamily: '.SF Pro Text',
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.4,
+        color: CortifyColors.label,
+      ),
+      titleMedium: const TextStyle(
+        fontFamily: '.SF Pro Text',
+        fontSize: 17,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.4,
+        color: CortifyColors.label,
+      ),
+      bodyLarge: const TextStyle(
+        fontFamily: '.SF Pro Text',
+        fontSize: 17,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.4,
+        height: 1.29,
+        color: CortifyColors.label,
+      ),
+      bodyMedium: const TextStyle(
+        fontFamily: '.SF Pro Text',
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.24,
+        color: CortifyColors.label,
+      ),
+      bodySmall: const TextStyle(
+        fontFamily: '.SF Pro Text',
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.08,
+        color: CortifyColors.muted,
+      ),
+      labelLarge: const TextStyle(
+        fontFamily: '.SF Pro Text',
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        color: CortifyColors.coral,
+      ),
+      labelSmall: const TextStyle(
+        fontFamily: '.SF Pro Text',
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.06,
+        color: CortifyColors.muted,
+      ),
     );
 
     return base.copyWith(
-      textTheme: GoogleFonts.dmSansTextTheme(base.textTheme).apply(
-        bodyColor: CortifyColors.charcoal,
-        displayColor: CortifyColors.charcoal,
+      textTheme: textTheme,
+      cupertinoOverrideTheme: const CupertinoThemeData(
+        primaryColor: CortifyColors.coral,
+        barBackgroundColor: Color(0x8CFFFFFF),
+        scaffoldBackgroundColor: Color(0x00000000),
       ),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: CortifyColors.charcoal,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        centerTitle: false,
-        titleTextStyle: GoogleFonts.fraunces(
-          fontSize: 24,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: 17,
           fontWeight: FontWeight.w600,
-          color: CortifyColors.charcoal,
-          letterSpacing: -0.3,
+          letterSpacing: -0.4,
+          color: CortifyColors.label,
         ),
       ),
-      cardTheme: CardThemeData(
-        color: Colors.white.withValues(alpha: 0.72),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0x33787880),
+        thickness: 0.5,
+        space: 0.5,
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.85)),
-        ),
-      ),
-      dividerTheme: DividerThemeData(
-        color: CortifyColors.sand.withValues(alpha: 0.8),
-        thickness: 1,
-        space: 1,
-      ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: CortifyColors.coral,
-        foregroundColor: CortifyColors.white,
-        elevation: 4,
-        focusElevation: 6,
-        highlightElevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        highlightElevation: 0,
+        focusElevation: 0,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: CortifyColors.charcoal,
-        contentTextStyle: GoogleFonts.dmSans(color: Colors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: CortifyColors.charcoal.withValues(alpha: 0.92),
+        contentTextStyle: const TextStyle(
+          fontFamily: '.SF Pro Text',
+          color: Colors.white,
+          fontSize: 15,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.transparent,
-        selectedItemColor: CortifyColors.coral,
-        unselectedItemColor: CortifyColors.muted,
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? Colors.white
+              : Colors.white,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? CortifyColors.coral
+              : const Color(0xFFE9E9EA),
+        ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: Colors.white.withValues(alpha: 0.55),
+        backgroundColor: Colors.white.withValues(alpha: 0.45),
         selectedColor: CortifyColors.coral,
-        labelStyle: GoogleFonts.dmSans(fontSize: 13),
+        labelStyle: const TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.7)),
+        side: BorderSide.none,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.75),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        fillColor: Colors.white.withValues(alpha: 0.55),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.9)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.9)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: CortifyColors.coral, width: 1.5),
+        ),
+        hintStyle: const TextStyle(
+          fontFamily: '.SF Pro Text',
+          color: CortifyColors.tertiary,
+          fontSize: 17,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: CortifyColors.coral,
-          foregroundColor: CortifyColors.white,
+          foregroundColor: Colors.white,
           elevation: 0,
-          minimumSize: const Size(48, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          minimumSize: const Size(44, 50),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: GoogleFonts.dmSans(
+          textStyle: const TextStyle(
+            fontFamily: '.SF Pro Text',
             fontWeight: FontWeight.w600,
-            fontSize: 15,
+            fontSize: 17,
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: CortifyColors.coral,
-          minimumSize: const Size(48, 40),
-          textStyle: GoogleFonts.dmSans(fontWeight: FontWeight.w600),
+          minimumSize: const Size(44, 44),
+          textStyle: const TextStyle(
+            fontFamily: '.SF Pro Text',
+            fontWeight: FontWeight.w400,
+            fontSize: 17,
+          ),
         ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: CortifyColors.coral,
+      ),
+      listTileTheme: const ListTileThemeData(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+        minVerticalPadding: 12,
+        iconColor: CortifyColors.coral,
+        textColor: CortifyColors.label,
       ),
     );
   }

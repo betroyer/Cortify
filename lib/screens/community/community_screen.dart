@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../database/database_helper.dart';
@@ -16,10 +16,9 @@ class CommunityScreen extends StatefulWidget {
   State<CommunityScreen> createState() => _CommunityScreenState();
 }
 
-class _CommunityScreenState extends State<CommunityScreen>
-    with SingleTickerProviderStateMixin {
+class _CommunityScreenState extends State<CommunityScreen> {
   final _db = DatabaseHelper.instance;
-  late TabController _tabs;
+  int _segment = 0;
   List<CommunityPost> _posts = [];
   List<FanProject> _projects = [];
   bool _loading = true;
@@ -28,21 +27,11 @@ class _CommunityScreenState extends State<CommunityScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
-    _tabs.addListener(() {
-      if (!_tabs.indexIsChanging) _load();
-    });
     _load();
   }
 
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
-  }
-
   String get _board {
-    switch (_tabs.index) {
+    switch (_segment) {
       case 1:
         return 'Announcements';
       case 2:
@@ -80,58 +69,80 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   Future<void> _compose() async {
     final controller = TextEditingController();
-    final result = await showModalBottomSheet<String>(
+    final result = await showCupertinoModalPopup<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-          child: GlassPanel(
-            tone: GlassTone.chrome,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: CortifyColors.sand,
-                      borderRadius: BorderRadius.circular(2),
+        return Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: EdgeInsets.only(
+              top: MediaQuery.paddingOf(ctx).top + 40,
+            ),
+            child: GlassPanel(
+              tone: GlassTone.chrome,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                20 + MediaQuery.viewInsetsOf(ctx).bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel'),
+                      ),
+                      const Spacer(),
+                      const Text(
+                        'New Post',
+                        style: TextStyle(
+                          fontFamily: '.SF Pro Text',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const Spacer(),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () =>
+                            Navigator.pop(ctx, controller.text.trim()),
+                        child: const Text(
+                          'Post',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Be kind. Toxicity isn\'t welcome here.',
+                    style: TextStyle(
+                      fontFamily: '.SF Pro Text',
+                      color: CortifyColors.muted,
+                      fontSize: 13,
                     ),
                   ),
-                ),
-                Text(
-                  'Share with Cortis',
-                  style: GoogleFonts.fraunces(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(height: 12),
+                  CupertinoTextField(
+                    controller: controller,
+                    maxLines: 5,
+                    placeholder: 'What\'s on your Cortis heart?',
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Be kind. Toxicity isn\'t welcome here.',
-                  style: TextStyle(color: CortifyColors.muted, fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    hintText: 'What\'s on your Cortis heart?',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-                  child: const Text('Post'),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
         );
@@ -149,65 +160,84 @@ class _CommunityScreenState extends State<CommunityScreen>
         language: 'en',
       ),
     );
-    _tabs.animateTo(0);
+    setState(() => _segment = 0);
     await _load();
   }
 
   @override
   Widget build(BuildContext context) {
     return GlassScaffold(
-      appBar: GlassAppBar(
-        title: const Text('Community'),
-        actions: [
-          IconButton(
-            tooltip: _showTranslation ? 'Hide translations' : 'Show translations',
-            onPressed: () =>
-                setState(() => _showTranslation = !_showTranslation),
-            icon: Icon(
-              _showTranslation ? Icons.translate : Icons.translate_outlined,
-              color: CortifyColors.coral,
+      extendBodyBehindAppBar: false,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 72),
+        child: GlassFab(
+          onPressed: _compose,
+          icon: CupertinoIcons.pencil,
+          tooltip: 'New post',
+        ),
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            IosLargeTitle(
+              'Community',
+              trailing: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () =>
+                    setState(() => _showTranslation = !_showTranslation),
+                child: Icon(
+                  CupertinoIcons.textformat,
+                  color: _showTranslation
+                      ? CortifyColors.coral
+                      : CortifyColors.muted,
+                ),
+              ),
             ),
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabs,
-          labelColor: CortifyColors.coral,
-          unselectedLabelColor: CortifyColors.muted,
-          indicatorColor: CortifyColors.coral,
-          dividerColor: Colors.transparent,
-          tabs: const [
-            Tab(text: 'Feed'),
-            Tab(text: 'Official'),
-            Tab(text: 'Projects'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: CupertinoSlidingSegmentedControl<int>(
+                groupValue: _segment,
+                backgroundColor: Colors.black.withValues(alpha: 0.06),
+                thumbColor: Colors.white.withValues(alpha: 0.92),
+                children: const {
+                  0: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('Feed'),
+                  ),
+                  1: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('Official'),
+                  ),
+                  2: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('Projects'),
+                  ),
+                },
+                onValueChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _segment = v);
+                  _load();
+                },
+              ),
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : _segment == 2
+                      ? _ProjectList(
+                          projects: _projects,
+                          onSupport: _support,
+                        )
+                      : _PostList(
+                          posts: _posts,
+                          showTranslation: _showTranslation,
+                          onHeart: _heart,
+                        ),
+            ),
           ],
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 64),
-        child: FloatingActionButton(
-          onPressed: _compose,
-          tooltip: 'New post',
-          child: const Icon(Icons.edit),
-        ),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabs,
-              children: [
-                _PostList(
-                  posts: _posts,
-                  showTranslation: _showTranslation,
-                  onHeart: _heart,
-                ),
-                _PostList(
-                  posts: _posts,
-                  showTranslation: _showTranslation,
-                  onHeart: _heart,
-                ),
-                _ProjectList(projects: _projects, onSupport: _support),
-              ],
-            ),
     );
   }
 }
@@ -228,16 +258,17 @@ class _PostList extends StatelessWidget {
     if (posts.isEmpty) {
       return const EmptyState(
         message: 'No posts yet. Be the first to share the love.',
-        icon: Icons.forum_outlined,
+        icon: CupertinoIcons.chat_bubble_2,
       );
     }
     return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, glassNavClearance(context)),
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(0, 0, 0, glassNavClearance(context)),
       itemCount: posts.length,
       itemBuilder: (context, i) {
         final p = posts[i];
         return GlassPanel(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
           padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,13 +285,17 @@ class _PostList extends StatelessWidget {
                           children: [
                             Text(
                               p.author,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontFamily: '.SF Pro Text',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
                             ),
                             if (p.isOfficial) ...[
                               const SizedBox(width: 4),
                               const Icon(
-                                Icons.verified,
-                                size: 14,
+                                CupertinoIcons.checkmark_seal_fill,
+                                size: 13,
                                 color: CortifyColors.coral,
                               ),
                             ],
@@ -269,9 +304,10 @@ class _PostList extends StatelessWidget {
                         Text(
                           DateFormat('MMM d · h:mm a')
                               .format(p.createdAt.toLocal()),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: CortifyColors.muted,
+                          style: const TextStyle(
+                            fontFamily: '.SF Pro Text',
+                            fontSize: 12,
+                            color: CortifyColors.tertiary,
                           ),
                         ),
                       ],
@@ -280,7 +316,14 @@ class _PostList extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              Text(p.content, style: const TextStyle(height: 1.4, fontSize: 14)),
+              Text(
+                p.content,
+                style: const TextStyle(
+                  fontFamily: '.SF Pro Text',
+                  height: 1.35,
+                  fontSize: 16,
+                ),
+              ),
               if (showTranslation &&
                   p.translatedContent != null &&
                   p.translatedContent!.isNotEmpty) ...[
@@ -291,9 +334,6 @@ class _PostList extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: CortifyColors.coral.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.6),
-                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,6 +341,7 @@ class _PostList extends StatelessWidget {
                       const Text(
                         'Translation',
                         style: TextStyle(
+                          fontFamily: '.SF Pro Text',
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: CortifyColors.coral,
@@ -310,8 +351,8 @@ class _PostList extends StatelessWidget {
                       Text(
                         p.translatedContent!,
                         style: const TextStyle(
-                          fontSize: 13,
-                          color: CortifyColors.charcoal,
+                          fontFamily: '.SF Pro Text',
+                          fontSize: 14,
                           height: 1.35,
                         ),
                       ),
@@ -319,24 +360,28 @@ class _PostList extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: () => onHeart(p),
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.favorite,
-                        size: 18,
-                        color: CortifyColors.coral,
+              CupertinoButton(
+                padding: const EdgeInsets.only(top: 8),
+                minimumSize: Size.zero,
+                onPressed: () => onHeart(p),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      CupertinoIcons.heart_fill,
+                      size: 18,
+                      color: CortifyColors.coral,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${p.hearts}',
+                      style: const TextStyle(
+                        fontFamily: '.SF Pro Text',
+                        fontSize: 14,
+                        color: CortifyColors.label,
                       ),
-                      const SizedBox(width: 6),
-                      Text('${p.hearts}', style: const TextStyle(fontSize: 13)),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -358,16 +403,17 @@ class _ProjectList extends StatelessWidget {
     if (projects.isEmpty) {
       return const EmptyState(
         message: 'No fan projects yet.',
-        icon: Icons.celebration_outlined,
+        icon: CupertinoIcons.star,
       );
     }
     return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, glassNavClearance(context)),
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(0, 0, 0, glassNavClearance(context)),
       itemCount: projects.length,
       itemBuilder: (context, i) {
         final p = projects[i];
         return GlassPanel(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,63 +423,47 @@ class _ProjectList extends StatelessWidget {
                   Expanded(
                     child: Text(
                       p.title,
-                      style: GoogleFonts.fraunces(
+                      style: const TextStyle(
+                        fontFamily: '.SF Pro Text',
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: CortifyColors.coral.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      p.status,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: CortifyColors.coral,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  Text(
+                    p.status,
+                    style: const TextStyle(
+                      fontFamily: '.SF Pro Text',
+                      fontSize: 13,
+                      color: CortifyColors.coral,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 p.description,
-                style: TextStyle(color: CortifyColors.muted, height: 1.4),
+                style: const TextStyle(
+                  fontFamily: '.SF Pro Text',
+                  color: CortifyColors.muted,
+                  height: 1.35,
+                  fontSize: 15,
+                ),
               ),
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(Icons.person_outline, size: 14, color: CortifyColors.muted),
-                  const SizedBox(width: 4),
-                  Text(
-                    p.organizer,
-                    style: TextStyle(fontSize: 12, color: CortifyColors.muted),
-                  ),
-                  const Spacer(),
-                  Text(
-                    DateFormat('MMM d').format(p.eventDate),
-                    style: TextStyle(fontSize: 12, color: CortifyColors.muted),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
               Row(
                 children: [
                   Text(
                     '${p.supporters} supporters',
                     style: const TextStyle(
+                      fontFamily: '.SF Pro Text',
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
                   ),
                   const Spacer(),
-                  TextButton(
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
                     onPressed: () => onSupport(p),
                     child: const Text('I\'ll join'),
                   ),
